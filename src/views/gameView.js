@@ -38,6 +38,21 @@
     return "Your drag time was: " + (duration / 1000.0).toFixed(2) + " s";
   };
 
+  GameView.prototype.flashLapTime = function(message){
+    $('#drag_time').html('<h1>' + message + '</h1>');
+  };
+
+  GameView.prototype.initializeTimeouts = function (element = document.getElementById('countdown')) {
+    element.innerHTML = '3';
+    setTimeout(function(){ element.innerHTML = '2'; }, 1000);
+    setTimeout(function(){ element.innerHTML = '1'; }, 2000);
+    setTimeout(function(){
+      document.getElementById('welcome_message').style.display = 'none';
+      controller.countdownFinished = true;
+      controller.startGame();
+    }, 3000);
+  };
+
   GameView.prototype._drawLines = function() {
     this._drawStartLine();
     this._drawFinishLine();

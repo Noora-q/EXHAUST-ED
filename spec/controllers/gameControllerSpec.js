@@ -1,10 +1,14 @@
 
 var gameController;
 var dummyElement;
+var car;
+var game;
 
 function carDouble() {
   this.xPosition = 0;
   this.yPosition = 0;
+  this.width = 40;
+  this.height = 25;
 }
 
 carDouble.prototype = {
@@ -21,8 +25,16 @@ carDouble.prototype = {
   }
 };
 
+function obstacleDouble() {
+  this.xPosition = 100;
+  this.yPosition = 100;
+  this.width = 10;
+  this.height = 100;
+}
+
 function gameDouble(carDouble) {
   this.car = carDouble;
+  this.obstacles = [];
 }
 
 gameDouble.prototype = {
@@ -47,6 +59,10 @@ gameViewDouble.prototype = {
   draw: function() {
   },
   drawObstacles: function(){
+  },
+  flashLapTime: function(){
+  },
+  initializeTimeouts: function(){
   }
 };
 
@@ -212,8 +228,9 @@ describe("GameController", function() {
 
   describe("countdown", function() {
     it("starts a countdown when countdown function called", function() {
+      var initializeTimeoutSpy = spyOn(gameView, "initializeTimeouts").and.callThrough();
       gameController.startCountdown();
-      expect(dummyElement.childNodes[0].childNodes[1].innerHTML).toEqual('3');
+      expect(initializeTimeoutSpy).toHaveBeenCalled();
     });
   });
 
@@ -223,6 +240,55 @@ describe("GameController", function() {
       gameController.createObstacles();
       expect(spyObstacles).toHaveBeenCalled();
     });
+  });
+
+  describe("Collision", function(){
+    var obstacle;
+
+    beforeEach(function(){
+      game.obstacles = [];
+      obstacle = new obstacleDouble();
+      game.obstacles.push(obstacle);
+      game.car.xPosition = 0;
+      game.car.yPosition = 0;
+    });
+
+    describe("#collidingFront", function(){
+      it("does not register a collision if the car has not hit an obstacle", function(){
+        expect(gameController.collidingFront(car)).toBe(false);
+      });
+
+      it("registers a collision if the car has hit an obstacle", function(){
+        game.car.xPosition = 60;
+        game.car.yPosition = 160;
+        expect(gameController.collidingFront(game.car)).toBe(true);
+      });
+    });
+
+    describe("#collidingTop", function(){
+      it("does not register a collision if the car has not hit an obstacle", function(){
+        expect(gameController.collidingTop(car)).toBe(false);
+      });
+
+      it("registers a collision if the car has hit an obstacle", function(){
+        game.car.xPosition = 105;
+        game.car.yPosition = 100;
+        expect(gameController.collidingTop(game.car)).toBe(true);
+      });
+    });
+
+    describe("#collidingBottom", function(){
+      it("does not register a collision if the car has not hit an obstacle", function(){
+        expect(gameController.collidingTop(car)).toBe(false);
+      });
+
+      it("registers a collision if the car has hit an obstacle", function(){
+        game.car.xPosition = 105;
+        game.car.yPosition = 100;
+        expect(gameController.collidingTop(game.car)).toBe(true);
+      });
+    });
+
   });
 
   afterAll(function() {

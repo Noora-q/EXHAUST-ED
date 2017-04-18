@@ -53,7 +53,7 @@
 
   GameController.prototype.startCountdown = function () {
     this.countdownStarted = true;
-    this._initializeTimeouts();
+    this.gameView.initializeTimeouts();
   };
 
   GameController.prototype.startGame = function () {
@@ -66,19 +66,64 @@
     this.gameView.clearCanvas();
     this.gameView.draw(car);
     this.gameView.drawObstacles(this.game.obstacles);
-    this._flashLapTime("Current drag time: " + (this.game.getCurrentDuration() / 1000.0).toFixed(2));
+    this.gameView.flashLapTime("Current drag time: " + (this.game.getCurrentDuration() / 1000.0).toFixed(2));
   };
 
   GameController.prototype.reachedFinishLine = function (car) {
     return car.getPosition().xCoord >= 1220;
   };
 
+
+    GameController.prototype.collidingFront = function (car) {
+      if(this.game.obstacles){
+        var obstaclesArray = this.game.obstacles;
+        for (i = 0; i < obstaclesArray.length; i++) {
+          if(((car.xPosition + car.width).toFixed(0)) == obstaclesArray[i].xPosition) {
+            if ((car.yPosition + car.height >= obstaclesArray[i].yPosition - car.height) && (car.yPosition + car.height <= obstaclesArray[i].yPosition + obstaclesArray[i].height + car.height)) {
+              if ((car.yPosition <= obstaclesArray[i].yPosition + obstaclesArray[i].height + car.height) && (car.yPosition >= obstaclesArray[i].yPosition - car.height)) {
+                return true;
+              }
+            }
+          }
+        }
+      }
+      return false;
+    };
+
+    GameController.prototype.collidingTop = function (car) {
+      if(this.game.obstacles){
+        var obstaclesArray = this.game.obstacles;
+        for (i = 0; i < obstaclesArray.length; i++) {
+          if((car.xPosition + car.width > obstaclesArray[i].xPosition) && (car.xPosition < obstaclesArray[i].xPosition + obstaclesArray[i].width)){
+            if((car.yPosition + car.height >= obstaclesArray[i].yPosition) && car.yPosition <= obstaclesArray[i].yPosition) {
+              return true;
+            }
+          }
+        }
+      }
+      return false;
+    };
+
+    GameController.prototype.collidingBottom = function (car) {
+      if(this.game.obstacles){
+        var obstaclesArray = this.game.obstacles;
+        for (i = 0; i < obstaclesArray.length; i++) {
+          if((car.xPosition + car.width > obstaclesArray[i].xPosition) && (car.xPosition < obstaclesArray[i].xPosition + obstaclesArray[i].width)){
+            if((car.yPosition <= obstaclesArray[i].yPosition + obstaclesArray[i].height) && (car.yPosition + car.height > obstaclesArray[i].yPosition + obstaclesArray[i].height)) {
+              return true;
+            }
+          }
+        }
+      }
+      return false;
+    };
+
   GameController.prototype._loop = function() {
     controller.updateGame(controller.game.car);
     if(controller.reachedFinishLine(controller.game.car)){
       clearInterval(controller.intervalTimer);
       controller.unbindKeys();
-      controller._flashLapTime(controller.gameView.getDurationString(controller.game.end()));
+      controller.gameView.flashLapTime(controller.gameView.getDurationString(controller.game.end()));
     }
   };
 
@@ -95,57 +140,13 @@
         }
       }
     }
-    if(!this.isColliding(car)){
+    if(!this.collidingFront(car)){
       car.moveForward();
     }
     else{
       car.moveBackward();
       car.resetSpeed();
     }
-  };
-
-  GameController.prototype.isColliding = function (car) {
-    if(this.game.obstacles){
-      var obstaclesArray = this.game.obstacles;
-      for (i = 0; i < obstaclesArray.length; i++) {
-        if(((car.xPosition + car.width).toFixed(0)) == obstaclesArray[i].xPosition) {
-          if ((car.yPosition + car.height >= obstaclesArray[i].yPosition - car.height) && (car.yPosition + car.height <= obstaclesArray[i].yPosition + obstaclesArray[i].height + car.height)) {
-            if ((car.yPosition <= obstaclesArray[i].yPosition + obstaclesArray[i].height + car.height) && (car.yPosition >= obstaclesArray[i].yPosition - car.height)) {
-              return true;
-            }
-          }
-        }
-      }
-    }
-    return false;
-  };
-
-  GameController.prototype.collidingTop = function (car) {
-    if(this.game.obstacles){
-      var obstaclesArray = this.game.obstacles;
-      for (i = 0; i < obstaclesArray.length; i++) {
-        if((car.xPosition + car.width > obstaclesArray[i].xPosition) && (car.xPosition < obstaclesArray[i].xPosition + obstaclesArray[i].width)){
-          if((car.yPosition + car.height >= obstaclesArray[i].yPosition) && car.yPosition <= obstaclesArray[i].yPosition) {
-            return true;
-          }
-        }
-      }
-    }
-    return false;
-  };
-
-  GameController.prototype.collidingBottom = function (car) {
-    if(this.game.obstacles){
-      var obstaclesArray = this.game.obstacles;
-      for (i = 0; i < obstaclesArray.length; i++) {
-        if((car.xPosition + car.width > obstaclesArray[i].xPosition) && (car.xPosition < obstaclesArray[i].xPosition + obstaclesArray[i].width)){
-          if((car.yPosition <= obstaclesArray[i].yPosition + obstaclesArray[i].height) && (car.yPosition + car.height > obstaclesArray[i].yPosition + obstaclesArray[i].height)) {
-            return true;
-          }
-        }
-      }
-    }
-    return false;
   };
 
   GameController.prototype._addKey = function (key) {
@@ -156,28 +157,12 @@
     delete this.keys[key.which];
   };
 
-  GameController.prototype._flashLapTime = function(message){
-    $('#drag_time').html('<h1>' + message + '</h1>');
-  };
-
-
   GameController.prototype._keyupHandler = function(e) {
     controller.keyup(e);
   };
 
   GameController.prototype._keydownHandler = function(e) {
     controller.keydown(e);
-  };
-
-  GameController.prototype._initializeTimeouts = function (element = document.getElementById('countdown')) {
-    element.innerHTML = '3';
-    setTimeout(function(){ element.innerHTML = '2'; }, 1000);
-    setTimeout(function(){ element.innerHTML = '1'; }, 2000);
-    setTimeout(function(){
-      document.getElementById('welcome_message').style.display = 'none';
-      controller.countdownFinished = true;
-      controller.startGame();
-    }, 3000);
   };
 
   exports.GameController = GameController;

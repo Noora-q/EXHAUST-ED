@@ -34,6 +34,13 @@ describe("GameView", function() {
     expect(gameView.getDurationString(30000)).toEqual("Your drag time was: 30.00 s");
   });
 
+  it("Shows the countdown to the user", function() {
+    console.log(dummyElement);
+    gameView.initializeTimeouts();
+
+    expect(dummyElement.childNodes[0].childNodes[1].innerHTML).toEqual('3');
+  });
+
   afterAll(function() {
     unmockInterface(dummyElement);
   });

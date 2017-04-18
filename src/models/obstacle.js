@@ -7,6 +7,6 @@
     this.xPosition = xPosition;
     this.yPosition = yPosition;
   }
-
+  
   exports.Obstacle = Obstacle;
 })(this);
